@@ -8,7 +8,7 @@ unzip lish-moa.zip -d kaggle/input
 # set up ```.env```
 
 ```
-sh setDotEnv
+sh setDotEnv.sh
 ```
 
 # set up docker-compose
