@@ -1,0 +1,9 @@
+version: '3'
+services:
+    moa:
+        build:
+            context: ./docker
+        volumes:
+            - ./kaggle:/kaggle
+        ports:
+            - 8000:8000
