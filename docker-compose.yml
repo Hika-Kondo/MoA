@@ -1,8 +1,13 @@
 version: '3'
 services:
     moa:
+        user: $UID:$GID
         build:
-            context: ./docker
+            context: .
+            args:
+                UID: $UID
+                GID: $GID
+                UNAME: $UNAME
         volumes:
             - ./kaggle:/kaggle
         ports:

@@ -5,10 +5,10 @@ mkdir kaggle/input
 unzip lish-moa.zip -d kaggle/input
 ```
 
-# setup docker image
+# set up ```.env```
 
 ```
-docker build -t moa:0.1 docker/
+sh setDotEnv
 ```
 
 # set up docker-compose
