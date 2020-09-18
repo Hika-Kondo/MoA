@@ -1,0 +1,18 @@
+version: '3'
+services:
+    moa-gpu:
+        runtime: nvidia
+        user: $UID:$GID
+        build:
+            context: .
+            args:
+                UID: $UID
+                GID: $GID
+                UNAME: $UNAME
+        volumes:
+            - ../kaggle:/kaggle
+        ports:
+            - 8000:8000
+        # command: jupyter notebook --ip=0.0.0.0 --port=8000 \
+                 # --NotebookApp.token='' --NotebookApp.password='' --allow-root
+        command: python test.py
