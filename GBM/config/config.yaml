@@ -1,0 +1,16 @@
+ex_name: lightgbm_parmas_only
+
+preprocess:
+    kwargs:
+        g_n_comp: 50
+        c_n_comp: 15
+        threshold: 0.5
+
+train:
+    params:
+        objective: regression
+        metric: binary_logloss
+        random_seed: 1234
+        device: gpu
+        gpu_use_dp: False
+        boosting_type: gbdt
