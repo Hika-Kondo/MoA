@@ -1,4 +1,3 @@
-
 version: '3'
 services:
     moa-gpu:
@@ -12,7 +11,7 @@ services:
                 UNAME: $UNAME
         volumes:
             - ../kaggle:/kaggle
-            - ../GBM:/GBM
+            - ../GBM:/kaggle/GBM
         ports:
             - 8000:8000
-        command: python /GBM/src/main.py
+        command: jupyter notebook --ip=0.0.0.0 --port=8000 --NotebookApp.token='' --NotebookApp.password='' --allow-root
