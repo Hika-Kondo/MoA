@@ -21,4 +21,10 @@ def preprocess(train, test, function_name, kwargs):
 
     concat_df = pd.get_dummies(concat_df, columns=["cp_time", "cp_dose"])
     train, test = split_df(concat_df, train_size, test_size)
+    train = train.drop("cp_type", axis=1)
+    test = test.drop("cp_type", axis=1)
+
+    train = train.drop("sig_id", axis=1)
+    test = test.drop("sig_id", axis=1)
+
     return train, test

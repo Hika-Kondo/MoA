@@ -1,5 +1,5 @@
 from preprocess import preprocess
-from solver import hole_train, hole_train_pred
+from solver_lightgbm import hole_train_lgbm, hole_train_pred_lgbm
 
 import mlflow
 import hydra
@@ -27,34 +27,15 @@ def main(cfg):
     train, test= preprocess(
             "/kaggle/input/lish-moa/train_features.csv",
             "/kaggle/input/lish-moa/test_features.csv",
-            "gene_cell_split_pca_use_low_drop_row_variace",
+            cfg.preprocess.function_name,
             cfg.preprocess.kwargs)
 
     train_targets = pd.read_csv("/kaggle/input/lish-moa/train_targets_scored.csv")
     sub = pd.read_csv("/kaggle/input/lish-moa/sample_submission.csv")
-    # train = train.merge(train_targets, on="sig_id")
 
-    # train = train[train["cp_type"] != "ctl_vehicle"].reset_index(drop=True)
-    # test = test[test["cp_type"] != "ctl_vehicle"].reset_index(drop=True)
-
-    train = train.drop("cp_type", axis=1)
-    test = test.drop("cp_type", axis=1)
-
-    train = train.drop("sig_id", axis=1)
-    test = test.drop("sig_id", axis=1)
     train_targets = train_targets.drop("sig_id", axis=1)
 
-    # params = {
-                # "objective": "regression",
-                # "metric": "binary_logloss",
-                # "random_seed":SEED,
-                # "device": "gpu",
-                # "gpu_use_dp": False,
-                # "boosting_type": "gbdt",
-            # }
-
-    # res_params, res_score = hole_train(train[feature_cols], train[target], params)
-    res_dict, score = hole_train_pred(train, train_targets, test, cfg.train.params, sub)
+    res_dict, score = hole_train_pred_lgbm(train, train_targets, test, cfg.train.params, sub)
     with open("res.json", "w") as f:
         json.dump(res_dict, f)
 

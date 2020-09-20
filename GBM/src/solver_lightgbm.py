@@ -6,7 +6,7 @@ from sklearn.model_selection import KFold
 from collections import defaultdict
 
 
-def hole_train(features, targets, params):
+def hole_train_lgbm(features, targets, params):
     '''
     train hole data
     '''
@@ -20,7 +20,7 @@ def hole_train(features, targets, params):
     return res_params, res_score
 
 
-def hole_train_pred(features, targets, test, params, sub):
+def hole_train_pred_lgbm(features, targets, test, params, sub):
     params = dict(params)
     res_dict= []
     targets_columns = targets.columns
@@ -33,7 +33,7 @@ def hole_train_pred(features, targets, test, params, sub):
 
         pred = _single_pred(features, targets[column], test, res)
         sub[column] = pred
-    return res_dict, sum_score / len(targets_columns)
+        return res_dict, sum_score / len(targets_columns)
 
 
 def _single_train(features, targets, params):
@@ -47,7 +47,7 @@ def _single_train(features, targets, params):
                 trainval,
                 verbose_eval=100,
                 early_stopping_rounds=100,
-                folds=KFold(n_splits=5),
+                folds=KFold(n_splits=3),
             )
     tuner.run()
     return tuner.best_params, tuner.best_score
