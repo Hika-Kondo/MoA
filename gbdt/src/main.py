@@ -1,5 +1,5 @@
 from preprocess import preprocess
-from solver_lightgbm import hole_train_lgbm, hole_train_pred_lgbm
+from solver_lightgbm import Solver
 
 import mlflow
 import hydra
@@ -16,6 +16,7 @@ from pathlib import Path
 
 
 SEED = 1234
+random.seed(SEED)
 np.random.seed(SEED)
 os.environ["PYTHONHASHSEED"] = str(SEED)
 
@@ -23,7 +24,6 @@ os.environ["PYTHONHASHSEED"] = str(SEED)
 @hydra.main('../config/config.yaml')
 def main(cfg):
     # kwargs = {"g_n_comp": 50, "c_n_comp":15, "threshold":0.5}
-    print(cfg)
     train, test= preprocess(
             "/kaggle/input/lish-moa/train_features.csv",
             "/kaggle/input/lish-moa/test_features.csv",
@@ -35,7 +35,9 @@ def main(cfg):
 
     train_targets = train_targets.drop("sig_id", axis=1)
 
-    res_dict, score = hole_train_pred_lgbm(train, train_targets, test, cfg.train.params, sub)
+    solver = Solver(features=train, targets=train_targets, test_features=test, sub=sub, **cfg.train)
+    solver.train_pred()
+
     with open("res.json", "w") as f:
         json.dump(res_dict, f)
 
