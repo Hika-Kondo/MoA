@@ -1,21 +1,31 @@
 ex_name: lightgbm_parmas_only
 
+# preprocess:
+#     kwargs:
+#         g_n_comp: 50
+#         c_n_comp: 15
+#         threshold: 0.5
+#     function_name: gene_cell_split_pca_use_row_drop_low_variace 
 preprocess:
     kwargs:
-        g_n_comp: 50
-        c_n_comp: 15
-        threshold: 0.5
-    function_name: gene_cell_split_pca_use_low_drop_row_variace 
+        n_comp: 50
+        threshold: 0.7
+    function_name: gen_cell_concat_pca_drop_variace
 
 train:
     num_folds: 5
-    num_ensemble: 1
+    num_ensemble: 2
     params:
         objective: regression
         metric: binary_logloss
         random_seed: 1234
-        device: gpu
-        gpu_use_dp: False
+        # device: gpu
+        # gpu_use_dp: False
+        # max_depth: 5
+        force_col_wise: true
         boosting_type: gbdt
         num_leaves: 24
         learning_rate: 0.01
+        vervose_eval: 10
+        num_boost_round: 1000
+        early_stopping_rounds: 10
