@@ -1,6 +1,6 @@
 import lightgbm as lgbm
 import pandas as pd
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.metrics import log_loss
 
 from multiprocessing import Pool
@@ -42,14 +42,24 @@ class Solver:
         if SEED is not None:
             self.params["random_seed"] = SEED
 
-        train_data = lgbm.Dataset(self.train_features, self.train_targets[column])
+        X_train, X_val, Y_train, Y_val = train_test_split(
+                    self.train_features,
+                    self.train_targets[column]
+                )
+        train_data = lgbm.Dataset(X_train, Y_train)
+        val_data = lgbm.Dataset(X_val, Y_val)
 
         model = lgbm.train(
-                self.params,
-                train_data,)
+                    self.params,
+                    train_data,
+                    valid_sets=[train_data, val_data],
+                    num_boost_round=1000,
+                    early_stopping_rounds=10,
+                    verbose_eval=10,
+                )
 
-        y_pred = model.predict(self.test_features)
-        val_pred = model.predict(self.val_features)
+        y_pred = model.predict(self.test_features, num_iteration=model.best_iteration)
+        val_pred = model.predict(self.val_features, num_iteration=model.best_iteration)
         score = log_loss(y_true=self.val_targets[column], y_pred=val_pred, labels=[0,1])
         self.score += score
         self.num_add += 1
