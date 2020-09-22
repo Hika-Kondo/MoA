@@ -8,7 +8,7 @@ ex_name: lightgbm_parmas_only
 #     function_name: gene_cell_split_pca_use_row_drop_low_variace 
 preprocess:
     kwargs:
-        n_comp: 50
+        n_comp: 200
         threshold: 0.7
     function_name: gen_cell_concat_pca_drop_variace
 
@@ -26,6 +26,3 @@ train:
         boosting_type: gbdt
         num_leaves: 24
         learning_rate: 0.01
-        vervose_eval: 10
-        num_boost_round: 1000
-        early_stopping_rounds: 10

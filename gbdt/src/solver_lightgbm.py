@@ -53,6 +53,9 @@ class Solver:
                     self.params,
                     train_data,
                     valid_sets=[train_data, val_data],
+                    num_boost_round=1000,
+                    early_stopping_rounds=10,
+                    verbose_eval=10,
                 )
 
         y_pred = model.predict(self.test_features, num_iteration=model.best_iteration)
