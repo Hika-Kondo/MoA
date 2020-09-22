@@ -1,13 +1,13 @@
 from preprocess import preprocess
-from solver_lightgbm import hole_train_lgbm, hole_train_pred_lgbm
+from solver_lightgbm import Solver
 
 import mlflow
 import hydra
+import omegaconf
 import optuna.integration.lightgbm as lgb
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold
-import mlflow
 
 import os
 import random
@@ -16,14 +16,30 @@ from pathlib import Path
 
 
 SEED = 1234
+random.seed(SEED)
 np.random.seed(SEED)
 os.environ["PYTHONHASHSEED"] = str(SEED)
 
 
+def log_params(dic, name=None):
+    for key, values in dic.items():
+        if type(values) == omegaconf.dictconfig.DictConfig:
+            if name is not None:
+                key = name + "." + key
+            log_params(values, key)
+        else:
+            mlflow.log_param(key, values)
+            print(key,":", values)
+
+
 @hydra.main('../config/config.yaml')
 def main(cfg):
-    # kwargs = {"g_n_comp": 50, "c_n_comp":15, "threshold":0.5}
-    print(cfg)
+
+    mlflow.set_tracking_uri('file://' + hydra.utils.get_original_cwd() + '/mlruns')
+    mlflow.set_experiment(cfg.ex_name)
+
+    log_params(cfg)
+
     train, test= preprocess(
             "/kaggle/input/lish-moa/train_features.csv",
             "/kaggle/input/lish-moa/test_features.csv",
@@ -35,16 +51,12 @@ def main(cfg):
 
     train_targets = train_targets.drop("sig_id", axis=1)
 
-    res_dict, score = hole_train_pred_lgbm(train, train_targets, test, cfg.train.params, sub)
-    with open("res.json", "w") as f:
-        json.dump(res_dict, f)
+    solver = Solver(features=train, targets=train_targets, test_features=test, sub=sub, **cfg.train)
+    score = solver.train_pred()
 
-    mlflow.set_tracking_uri('file://' + hydra.utils.get_original_cwd() + '/mlruns')
-    mlflow.set_experiment(cfg.ex_name)
+    # with open("res.json", "w") as f:
+        # json.dump(res_dict, f)
 
-    mlflow.log_artifact(Path.cwd() / "res.json")
-    mlflow.log_params(cfg.preprocess)
-    mlflow.log_params(cfg.train.params)
     mlflow.log_metric("CV score", score)
 
 

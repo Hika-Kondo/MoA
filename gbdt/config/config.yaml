@@ -5,8 +5,11 @@ preprocess:
         g_n_comp: 50
         c_n_comp: 15
         threshold: 0.5
+    function_name: gene_cell_split_pca_use_low_drop_row_variace 
 
 train:
+    num_folds: 5
+    num_ensemble: 1
     params:
         objective: regression
         metric: binary_logloss
@@ -14,3 +17,5 @@ train:
         device: gpu
         gpu_use_dp: False
         boosting_type: gbdt
+        num_leaves: 24
+        learning_rate: 0.01

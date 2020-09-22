@@ -12,7 +12,7 @@ services:
                 UNAME: $UNAME
         volumes:
             - ../kaggle:/kaggle
-            - ../GBM:/GBM
+            - ../gbdt:/gbdt
         ports:
             - 8000:8000
-        command: python /GBM/src/main.py
+        command: python /gbdt/src/main.py
