@@ -5,6 +5,7 @@ from sklearn.metrics import log_loss
 
 from multiprocessing import Pool
 from random import randint
+from collections import defaultdict
 
 
 class Solver:
@@ -22,7 +23,9 @@ class Solver:
         self.sub = sub
 
         self.score = 0
+        self.num_add = 0
         self.cv = KFold(n_splits=num_folds, shuffle=True,)
+        self.cv_res = defaultdict(list)
 
     def return_columns(self):
         return targets.columns
@@ -47,8 +50,10 @@ class Solver:
 
         y_pred = model.predict(self.test_features)
         val_pred = model.predict(self.val_features)
-        self.score += log_loss(y_true=self.val_targets[column], y_pred=val_pred, labels=[0,1])
-        return y_pred
+        score = log_loss(y_true=self.val_targets[column], y_pred=val_pred, labels=[0,1])
+        self.score += score
+        self.num_add += 1
+        return y_pred, score
 
     def train_pred(self):
         '''
@@ -60,7 +65,9 @@ class Solver:
 
         # all columns roop
         for column in self.targets.columns:
+            self.sub[column] = 0
             # ensamble roop
+            self.cv_res["sig_id"].append(column)
             for i in range(self.num_ensemble):
                 # CV roop
                 for fold_id, (train_index, valid_index) in enumerate(self.cv.split(self.features)):
@@ -70,10 +77,12 @@ class Solver:
                     self.train_targets = self.targets.loc[train_index, :]
                     self.val_targets = self.targets.loc[valid_index, :]
 
-                    y_pred = self._train_pred(SEED=randint(0,100000), column=column)
-
-            y_pred /= (self.num_folds * self.num_ensemble)
-            self.sub[column] = y_pred
+                    y_pred, score = self._train_pred(SEED=randint(0,100000), column=column)
+                    y_pred /= (self.num_folds * self.num_ensemble)
+                    self.sub[column] += y_pred
+                    self.cv_res["num_ensemble_{}_num_fold{}".format(i,fold_id)].append(score)
 
         self.sub.to_csv("submission.csv")
-        return self.score / len(self.targets.columns) * self.num_ensemble * self.num_folds
+        cv_res = pd.DataFrame(self.cv_res)
+        cv_res.to_csv("CV_res.csv")
+        return self.score / self.num_add
