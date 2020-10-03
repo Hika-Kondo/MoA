@@ -14,13 +14,14 @@ class Solver:
     solver class for lightgbm
     '''
 
-    def __init__(self, params, features, targets, test_features, num_folds, num_ensemble, sub):
+    def __init__(self, params, features, targets, test_features, num_folds, num_ensemble, is_under, sub):
         self.params = dict(params)
         self.features = features
         self.targets = targets
         self.test_features = test_features
         self.num_folds = num_folds
         self.num_ensemble = num_ensemble
+        self.is_under = is_under
         self.sub = sub
 
         self.score = 0
@@ -73,6 +74,27 @@ class Solver:
         self.num_add += 1
         return y_pred, score, val_pred, np.asarray(self.val_targets[column])
 
+    def _under_sampling(self, column):
+        '''
+        do under sampling
+        '''
+        features_col = self.train_features.columns
+        targets_col = self.train_targets.columns
+
+        df = pd.concat([self.train_features, self.train_targets], axis=1)
+        value_counts = df[column].value_counts().sort_values(ascending=True)
+        df_each_classes = []
+        for i in range(len(value_counts)):
+            df_one_class = df[df[column] == value_counts.index[i]]
+            if i != 0:
+                df_one_class = df_one_class.sample(n=len(df_each_classes[0]))
+            df_each_classes.append(df_one_class)
+
+        df_balanced = pd.concat(df_each_classes, axis=0)
+        df_balanced = df_balanced.reset_index(drop=True)
+
+        return df_balanced[features_col], df_balanced[targets_col]
+
     def train_pred(self):
         '''
         train and predict dataframe
@@ -96,6 +118,9 @@ class Solver:
 
                     self.train_targets = self.targets.loc[train_index, :]
                     self.val_targets = self.targets.loc[valid_index, :]
+
+                    if self.is_under:
+                        self.train_feature, self.train_target = self._under_sampling(column)
 
                     y_pred, score, pred, ans = self._train_pred(SEED=randint(0,10000), column=column)
                     y_pred /= (self.num_folds * self.num_ensemble)
