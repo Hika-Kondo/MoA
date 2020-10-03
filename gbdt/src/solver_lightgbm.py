@@ -1,11 +1,12 @@
+import numpy as np
 import lightgbm as lgbm
 import pandas as pd
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.metrics import log_loss
 
-from multiprocessing import Pool
 from random import randint
 from collections import defaultdict
+from utils import after_process
 
 
 class Solver:
@@ -26,6 +27,9 @@ class Solver:
         self.num_add = 0
         self.cv = KFold(n_splits=num_folds, shuffle=True,)
         self.cv_res = defaultdict(list)
+
+        # self.pred_np = []
+        # self.ans_np = []
 
     def return_columns(self):
         return targets.columns
@@ -60,10 +64,14 @@ class Solver:
 
         y_pred = model.predict(self.test_features, num_iteration=model.best_iteration)
         val_pred = model.predict(self.val_features, num_iteration=model.best_iteration)
+
+        # self.pred_np.append(val_pred)
+        # self.ans_np.append(np.asarray(self.val_targets[column]))
+
         score = log_loss(y_true=self.val_targets[column], y_pred=val_pred, labels=[0,1])
         self.score += score
         self.num_add += 1
-        return y_pred, score
+        return y_pred, score, val_pred, np.asarray(self.val_targets[column])
 
     def train_pred(self):
         '''
@@ -72,6 +80,8 @@ class Solver:
             1. do a CV fold (training and prediction in that fold)
             2. 1. do num_ensemble times.
         '''
+
+        pred_np = []; ans_np = []
 
         # all columns roop
         for column in self.targets.columns:
@@ -87,12 +97,17 @@ class Solver:
                     self.train_targets = self.targets.loc[train_index, :]
                     self.val_targets = self.targets.loc[valid_index, :]
 
-                    y_pred, score = self._train_pred(SEED=randint(0,100000), column=column)
+                    y_pred, score, pred, ans = self._train_pred(SEED=randint(0,10000), column=column)
                     y_pred /= (self.num_folds * self.num_ensemble)
                     self.sub[column] += y_pred
                     self.cv_res["num_ensemble_{}_num_fold{}".format(i,fold_id)].append(score)
+                    pred_np.append(pred); ans_np.append(ans)
 
         self.sub.to_csv("submission.csv")
         cv_res = pd.DataFrame(self.cv_res)
         cv_res.to_csv("CV_res.csv")
+
+        pred_np = np.concatenate(pred_np)
+        ans_np = np.concatenate(ans_np)
+        after_process(pred=pred_np, ans=ans_np, name="res.png")
         return self.score / self.num_add
