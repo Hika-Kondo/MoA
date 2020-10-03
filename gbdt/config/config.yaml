@@ -15,6 +15,7 @@ preprocess:
 train:
     num_folds: 5
     num_ensemble: 2
+    is_under: true
     params:
         objective: binary
         metric: binary_logloss
