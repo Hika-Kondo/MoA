@@ -38,26 +38,27 @@ def main(cfg):
     mlflow.set_tracking_uri('file://' + hydra.utils.get_original_cwd() + '/mlruns')
     mlflow.set_experiment(cfg.ex_name)
 
-    log_params(cfg)
+    with mlflow.start_run() as run:
+        log_params(cfg)
 
-    train, test= preprocess(
-            "/kaggle/input/lish-moa/train_features.csv",
-            "/kaggle/input/lish-moa/test_features.csv",
-            cfg.preprocess.function_name,
-            cfg.preprocess.kwargs)
+        train, test= preprocess(
+                "/kaggle/input/lish-moa/train_features.csv",
+                "/kaggle/input/lish-moa/test_features.csv",
+                cfg.preprocess.function_name,
+                cfg.preprocess.kwargs)
 
-    train_targets = pd.read_csv("/kaggle/input/lish-moa/train_targets_scored.csv")
-    sub = pd.read_csv("/kaggle/input/lish-moa/sample_submission.csv")
+        train_targets = pd.read_csv("/kaggle/input/lish-moa/train_targets_scored.csv")
+        sub = pd.read_csv("/kaggle/input/lish-moa/sample_submission.csv")
 
-    train_targets = train_targets.drop("sig_id", axis=1)
+        train_targets = train_targets.drop("sig_id", axis=1)
 
-    solver = Solver(features=train, targets=train_targets, test_features=test, sub=sub, **cfg.train)
-    score = solver.train_pred()
+        solver = Solver(features=train, targets=train_targets, test_features=test, sub=sub, **cfg.train)
+        score = solver.train_pred()
 
-    # with open("res.json", "w") as f:
-        # json.dump(res_dict, f)
+        # with open("res.json", "w") as f:
+            # json.dump(res_dict, f)
 
-    mlflow.log_metric("CV score", score)
+        mlflow.log_metric("CV score", score)
 
 
 if __name__ == "__main__":

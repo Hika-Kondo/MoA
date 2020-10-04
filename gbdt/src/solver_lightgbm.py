@@ -72,8 +72,8 @@ class Solver:
                         train_data,
                         valid_sets=[train_data, val_data],
                         num_boost_round=100,
-                        early_stopping_rounds=100,
-                        verbose_eval=100,
+                        early_stopping_rounds=10,
+                        verbose_eval=101,
                     )
 
             y_pred = model.predict(test_features, num_iteration=model.best_iteration)
