@@ -53,7 +53,9 @@ class Solver:
 
         X_train, X_val, Y_train, Y_val = train_test_split(
                     self.train_features,
-                    self.train_targets[column]
+                    self.train_targets[column],
+                    test_size=0.1,
+                    shuffle=True,
                 )
 
         # if SEED is not None:
