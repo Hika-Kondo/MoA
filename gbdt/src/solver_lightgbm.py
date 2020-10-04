@@ -17,7 +17,7 @@ class Solver:
     solver class for lightgbm
     '''
 
-    def __init__(self, params, features, targets, test_features, num_folds, num_ensemble, is_under, sub):
+    def __init__(self, params, features, targets, test_features, num_folds, num_ensemble, is_under, mode, is_lda, sub):
         self.params = dict(params)
         self.features = features
         self.targets = targets
@@ -25,7 +25,9 @@ class Solver:
         self.num_folds = num_folds
         self.num_ensemble = num_ensemble
         self.is_under = is_under
+        self.is_lda = is_lda
         self.sub = sub
+        self.mode = mode
 
         self.score = 0
         self.num_add = 0
@@ -58,38 +60,44 @@ class Solver:
                     shuffle=True,
                 )
 
-        # if SEED is not None:
-            # self.params["random_seed"] = SEED
+        if self.mode == "normal":
+            if SEED is not None:
+                self.params["random_seed"] = SEED
 
-        # train_data = lgb.Dataset(X_train, Y_train)
-        # val_data = lgb.Dataset(X_val, Y_val)
+            train_data = lgb.Dataset(X_train, Y_train)
+            val_data = lgb.Dataset(X_val, Y_val)
 
-        # model = lgb.train(
-                    # self.params,
-                    # train_data,
-                    # valid_sets=[train_data, val_data],
-                    # num_boost_round=1000,
-                    # early_stopping_rounds=10,
-                    # verbose_eval=10,
-                # )
+            model = lgb.train(
+                        self.params,
+                        train_data,
+                        valid_sets=[train_data, val_data],
+                        num_boost_round=100,
+                        early_stopping_rounds=100,
+                        verbose_eval=100,
+                    )
 
-        # y_pred = model.predict(test_features, num_iteration=model.best_iteration)
-        # val_pred = model.predict(self.val_features, num_iteration=model.best_iteration)
+            y_pred = model.predict(test_features, num_iteration=model.best_iteration)
+            val_pred = model.predict(self.val_features, num_iteration=model.best_iteration)
 
-        if SEED is not None:
-            self.params["random_state"] = SEED
+        elif self.mode == "classifier":
+            # if SEED is not None:
+                # self.params["random_state"] = SEED
 
-        clf = lgb.LGBMClassifier(**self.params, class_weight={1:1,0:1})
-        clf.fit(X_train, Y_train, eval_set=[(X_val, Y_val)], verbose=0, early_stopping_rounds=500)
+            clf = lgb.LGBMClassifier(**self.params, class_weight={1:1,0:1})
+            clf.fit(X_train, Y_train, eval_set=[(X_val, Y_val)], verbose=0, early_stopping_rounds=500)
 
-        y_pred = clf.predict_proba(test_features)[:, -1]
-        val_pred = clf.predict_proba(self.val_features)[:, -1]
+            y_pred = clf.predict_proba(test_features)[:, -1]
+            val_pred = clf.predict_proba(self.val_features)[:, -1]
+            val_pred = np.asarray(val_pred)
+
+        else:
+            raise NotImplementedError("please select mode in [normal, classifier]")
 
         score = log_loss(y_true=self.val_targets[column], y_pred=val_pred, labels=[0,1])
         self.score += score
         self.num_add += 1
         self.logger.info("column:{} validation loss {}".format(column, score))
-        return y_pred, score, val_pred, np.asarray(self.val_targets[column])
+        return y_pred, score, val_pred, self.val_targets[column]
 
     def _under_sampling(self, column):
         '''
@@ -122,15 +130,22 @@ class Solver:
 
         pred_np = []; ans_np = []
 
+        now = 1
         # all columns roop
         for column in self.targets.columns:
-            self.logger.info(column)
+            self.logger.info("{}/{}\t{}".format(now, len(self.targets.columns),column)); now +=1
             self.sub[column] = 0
+
             if column in ["atp-sensitive_potassium_channel_antagonist", "erbb2_inhibitor",]:
                 self.sub[column] = 1e-5
                 continue
+
             train_features = self.features
             test_features = self.test_features
+
+            if self.is_lda:
+                train_features, test_features = self._lda(column)
+
             # ensamble roop
             self.cv_res["sig_id"].append(column)
             for i in range(self.num_ensemble):
@@ -171,7 +186,10 @@ class Solver:
         clf = LinearDiscriminantAnalysis()
         clf.fit(self.features, self.targets[column])
 
-        features = clf.transform(self.features)
-        test_features = clf.transform(self.test_features)
+        features = self.features
+        test_features = self.test_features
+
+        features["lda"] = clf.transform(self.features)
+        test_features["lda"] = clf.transform(self.test_features)
 
         return features, test_features

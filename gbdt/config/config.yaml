@@ -1,4 +1,6 @@
-ex_name: classifier
+# ex_name: classifier
+ex_name: normal
+# ex_name: test
 
 # preprocess:
 #     kwargs:
@@ -10,27 +12,24 @@ preprocess:
     kwargs:
         n_comp: 50
         threshold: 0.7
+        is_rankgauss: false
+    # function_name: select_features_gen_cell_concat_ica_drop_low_variace
     function_name: select_features
 
 train:
     num_folds: 5
     num_ensemble: 2
-    is_under: true
+    is_under: false
+    is_lda: false
+    mode: classifier
+    # classifier params
     params:
-        n_estimators: 200
         objective: binary
         colsample_bytree: 0.3
-        metrics: auc
         boosting_type: gbdt
         learning_rate: 0.01
-        random_state: 1234
-        # metric: binary_logloss
-        # random_seed: 1234
-        # device: gpu
-        # gpu_use_dp: False
-        # max_depth: 5
-        # max_depth: -1
-        # force_col_wise: true
-        # num_leaves: 24
-        # max_bin: 63
-        # max_bin: 15
+        metric: binary_logloss
+        random_seed: 1234
+        max_depth: 5
+        num_leaves: 24
+        verbose: -1

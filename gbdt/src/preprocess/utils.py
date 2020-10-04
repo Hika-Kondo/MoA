@@ -33,8 +33,7 @@ def ica(df, n_comp, columns_name):
         columns_name: res features name
     '''
     data = (FastICA(n_componets=n_comp)).fit_transform(df)
-    data = pd.DataFrame(data, columns=[columns_name.format(i) for i in raneg(n_comp)])
-    return data
+    return pd.DataFrame(data, columns=[columns_name.format(i) for i in raneg(n_comp)])
 
 
 def rankgauss(df):
