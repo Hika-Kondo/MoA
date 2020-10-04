@@ -1,4 +1,4 @@
-from .utils import pca, drop_low_variace
+from .utils import pca, drop_low_variace, rankgauss
 
 import pandas as pd
 
@@ -28,6 +28,8 @@ def gen_cell_concat_pca_drop_variace(df, n_comp, threshold):
     drop low variance
     '''
     genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
+    genes_cells_pca = pca(df[genes_cells], n_comp, "pca_{}")
+
     not_gc = [col for col in df.columns if col not in genes_cells]
 
     genes_cells_pca = pca(df[genes_cells], n_comp, "pca_{}")
@@ -42,7 +44,7 @@ def select_features_gen_cell_concat_pca_drop_low_variace(df, n_comp, threshold):
     select important features
     gene cell concat
     pca in n_comp dim
-    drop low variace columns threshold is threshold
+    drop low variace columns threshold
     args:
         df: dataframe,
         n_comp: pca dim
@@ -60,11 +62,39 @@ def select_features_gen_cell_concat_pca_drop_low_variace(df, n_comp, threshold):
     df = drop_low_variace(df, threshold)
     return df
 
+
+def select_features_gen_cell_concat_ica_drop_low_variace(df, n_comp, threshold):
+    '''
+    select important features
+    gene cells concat
+    ica to n_comp dims
+    drop low variance columns threshold
+
+    args:
+        df: pandas dataframe feauters
+        n_comp: comp dim ica
+        threshold: threshold of low variance
+    '''
+    df = select_features(df, n_comp, threshold)
+
+    genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
+    df[genes_cells] = rankgauss(df[genes_cells])
+    genes_cells_pca = pca(df[genes_cells], n_comp, "ica_{}")
+
+    df.reset_index(drop=True, inplace=True)
+    genes_cells_pca.reset_index(drop=True, inplace=True)
+
+    df = pd.concat([df, genes_cells_pca], axis=1)
+    df = drop_low_variace(df, threshold)
+    return df
+
+
 def select_features(df, n_comp, threshold):
     '''
     select important features
     '''
-    top_feats = [  1,   2,   3,   4,   5,   6,   7,   9,  11,  14,  15,  16,  17,
+    top_feats = \
+      [  1,   2,   3,   4,   5,   6,   7,   9,  11,  14,  15,  16,  17,
         18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  29,  30,  31,
         32,  33,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  46,
         47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  58,  59,  60,
@@ -130,4 +160,6 @@ def select_features(df, n_comp, threshold):
         if i in top_feats:
             top.append(df.columns[i])
 
+    genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
+    df[genes_cells] = rankgauss(df[genes_cells])
     return df[top]
