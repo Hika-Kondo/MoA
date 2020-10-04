@@ -63,7 +63,7 @@ def select_features_gen_cell_concat_pca_drop_low_variace(df, n_comp, threshold):
     return df
 
 
-def select_features_gen_cell_concat_ica_drop_low_variace(df, n_comp, threshold):
+def select_features_gen_cell_concat_ica_drop_low_variace(df_in, n_comp, threshold, is_rankgauss):
     '''
     select important features
     gene cells concat
@@ -75,10 +75,12 @@ def select_features_gen_cell_concat_ica_drop_low_variace(df, n_comp, threshold):
         n_comp: comp dim ica
         threshold: threshold of low variance
     '''
-    df = select_features(df, n_comp, threshold)
+
+    df = select_features(df_in, n_comp, threshold, is_rankgauss)
 
     genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
-    df[genes_cells] = rankgauss(df[genes_cells])
+    if is_rankgauss:
+        df[genes_cells] = rankgauss(df[genes_cells])
     genes_cells_pca = pca(df[genes_cells], n_comp, "ica_{}")
 
     df.reset_index(drop=True, inplace=True)
@@ -89,7 +91,7 @@ def select_features_gen_cell_concat_ica_drop_low_variace(df, n_comp, threshold):
     return df
 
 
-def select_features(df, n_comp, threshold):
+def select_features(df, n_comp, threshold, is_rankgauss):
     '''
     select important features
     '''
@@ -161,5 +163,6 @@ def select_features(df, n_comp, threshold):
             top.append(df.columns[i])
 
     genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
-    df[genes_cells] = rankgauss(df[genes_cells])
+    if is_rankgauss:
+        df[genes_cells] = rankgauss(df[genes_cells])
     return df[top]
