@@ -19,6 +19,7 @@ def after_process(pred, ans, name):
     sns.set_palette('gray')
 
     fig = plt.figure()
+
     ax = fig.add_subplot(2,2,1)
     ax.hist(one, bins=50)
     ax.set_xlabel("ones")
@@ -27,7 +28,6 @@ def after_process(pred, ans, name):
     ax.hist(zero, bins=50)
     ax.set_xlabel("zeros")
 
-    fig = plt.figure()
     ax = fig.add_subplot(2,2,3)
     ax.hist(one, bins=50)
     ax.set_xlabel("ones")
