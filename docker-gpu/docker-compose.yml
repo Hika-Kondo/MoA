@@ -13,6 +13,9 @@ services:
         volumes:
             - ../kaggle:/kaggle
             - ../gbdt:/gbdt
+            - ../nn:/nn
         ports:
             - 8000:8000
-        command: python /gbdt/src/main.py
+        # command: python /gbdt/src/main.py
+        command: python /gbdt/src/main.py preprocess.kwargs.is_rankgauss=true,false train.is_under=true,false train.is_lda=true,false train.mode=normal -m
+        # command: sh /gbdt/train.sh
