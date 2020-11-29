@@ -72,6 +72,7 @@ RUN conda update -n base -c defaults conda && \
         mlflow==1.11.0 \
         # hydra==2.5 \
         pandas==1.1.2 \
+        seaborn==0.9.0 \
         optuna==2.1.0 && \
     conda clean -i -t -y
 
