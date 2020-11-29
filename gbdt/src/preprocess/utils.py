@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, FastICA
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import QuantileTransformer
 
@@ -32,8 +32,8 @@ def ica(df, n_comp, columns_name):
         n_comp: number of dimention to lca
         columns_name: res features name
     '''
-    data = (FastICA(n_componets=n_comp)).fit_transform(df)
-    return pd.DataFrame(data, columns=[columns_name.format(i) for i in raneg(n_comp)])
+    data = (FastICA(n_components=n_comp)).fit_transform(df)
+    return pd.DataFrame(data, columns=[columns_name.format(i) for i in range(n_comp)])
 
 
 def rankgauss(df):
@@ -65,3 +65,28 @@ def drop_low_variace(df, threshold):
         columns=["sig_id","cp_type","cp_time","cp_dose"])
 
     return pd.concat([train_features, data_transformed], axis=1)
+
+
+def add_sum_mean_std_kurt_skew(df,):
+    '''
+    add mean, std, kurt, skew
+    '''
+    features_g = [col for col in df.columns if col.startswith("g-")]
+    features_c = [col for col in df.columns if col.startswith("c-")]
+
+    df['g_sum'] = df[features_g].sum(axis = 1)
+    df['g_mean'] = df[features_g].mean(axis = 1)
+    df['g_std'] = df[features_g].std(axis = 1)
+    df['g_kurt'] = df[features_g].kurtosis(axis = 1)
+    df['g_skew'] = df[features_g].skew(axis = 1)
+    df['c_sum'] = df[features_c].sum(axis = 1)
+    df['c_mean'] = df[features_c].mean(axis = 1)
+    df['c_std'] = df[features_c].std(axis = 1)
+    df['c_kurt'] = df[features_c].kurtosis(axis = 1)
+    df['c_skew'] = df[features_c].skew(axis = 1)
+    df['gc_sum'] = df[features_g + features_c].sum(axis = 1)
+    df['gc_mean'] = df[features_g + features_c].mean(axis = 1)
+    df['gc_std'] = df[features_g + features_c].std(axis = 1)
+    df['gc_kurt'] = df[features_g + features_c].kurtosis(axis = 1)
+    df['gc_skew'] = df[features_g + features_c].skew(axis = 1)
+    return df

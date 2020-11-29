@@ -1,4 +1,4 @@
-from .utils import pca, drop_low_variace, rankgauss
+from .utils import pca, drop_low_variace, rankgauss, add_sum_mean_std_kurt_skew, ica
 
 import pandas as pd
 
@@ -81,7 +81,36 @@ def select_features_gen_cell_concat_ica_drop_low_variace(df_in, n_comp, threshol
     genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
     if is_rankgauss:
         df[genes_cells] = rankgauss(df[genes_cells])
-    genes_cells_pca = pca(df[genes_cells], n_comp, "ica_{}")
+    genes_cells_pca = ica(df[genes_cells], n_comp, "ica_{}")
+
+    df.reset_index(drop=True, inplace=True)
+    genes_cells_pca.reset_index(drop=True, inplace=True)
+
+    df = pd.concat([df, genes_cells_pca], axis=1)
+    df = drop_low_variace(df, threshold)
+    return df
+
+
+def select_features_gen_cell_concat_ica_drop_low_variace_add_features(df_in, n_comp, threshold, is_rankgauss):
+    '''
+    select important features
+    gene cell concat
+    ica to n_comp dim
+    drop low variace columns thresholds
+    add features sum mean std kurt skew
+    args:
+        df: pandas dataframe
+        n_comp: comp dim ica
+        threshold: threshold of low cariance
+    '''
+    df = select_features(df_in, n_comp, threshold, is_rankgauss)
+
+    genes_cells = [col for col in df.columns if col.startswith(("g-", "c-"))]
+    if is_rankgauss:
+        df[genes_cells] = rankgauss(df[genes_cells])
+
+    genes_cells_pca = add_sum_mean_std_kurt_skew(df)
+    genes_cells_pca = ica(df[genes_cells], n_comp, "ica_{}")
 
     df.reset_index(drop=True, inplace=True)
     genes_cells_pca.reset_index(drop=True, inplace=True)
